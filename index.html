@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#2ecc71">
+  <title>Harita Control</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png" type="image/png">
+
+
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Manifest untuk PWA -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Icon (opsional tapi bagus buat PWA) -->
+  <link rel="icon" href="icon-192.png" type="image/png">
+</head>
+<body>
+  <div class="container">
+    <!-- Lottie animation -->
+    <div id="animationContainer" class="lottie"></div>
+
+    <header>
+      <h1>Harita Control</h1>
+      <p id="status">status: set ESP IP</p>
+    </header>
+
+    <div class="card">
+      <div class="label">Temperature</div>
+      <div class="value" id="temp">-- °C</div>
+    </div>
+
+    <div class="card">
+      <div class="label">pH</div>
+      <div class="value" id="ph">--</div>
+    </div>
+
+    <div class="card">
+      <div class="label">TDS / Flow</div>
+      <div class="value" id="tds">--</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Relay Control</div>
+      <div class="relay-buttons">
+        <button id="pumpBtn">Pump</button>
+        <button id="phUpBtn">pH Up</button>
+        <button id="phDownBtn">pH Down</button>
+        <button id="nutrientBtn">Nutrient</button>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="refresh">Refresh</button>
+      <input id="espIp" placeholder="ESP IP (e.g. 192.168.43.200)" />
+    </div>
+
+    <div class="log" id="log">--</div>
+  </div>
+
+  <!-- Lottie library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+
+  <!-- App logic -->
+  <script src="app.js"></script>
+
+  <!-- Service Worker -->
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/Harita-control/service-worker.js');
+  }
+</script>
+
+</body>
+</html>
