@@ -31,27 +31,27 @@ self.addEventListener('activate', (e) => {
 // Fetch event: ambil dari cache dulu, baru fallback ke jaringan
 self.addEventListener('fetch', (e) => {
   e.respondWith(
-    caches.match(e.request).then((response) => {
-      if (response) return response;
+    caches.match(e.request).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
 
-      return fetch(e.request).then((networkResponse) => {
-        // Hanya cache permintaan GET yang sukses
-        if (
-          e.request.method === 'GET' &&
-          networkResponse &&
-          networkResponse.status === 200 &&
-          networkResponse.type === 'basic'
-        ) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(e.request, responseToCache);
-          });
-        }
-        return networkResponse;
-      }).catch(() => {
-        // Offline fallback bisa kamu tambahin di sini kalau mau
-        return caches.match('./index.html');
-      });
+      return fetch(e.request)
+        .then((networkResponse) => {
+          if (
+            e.request.method === 'GET' &&
+            networkResponse &&
+            networkResponse.status === 200 &&
+            networkResponse.type === 'basic'
+          ) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(e.request, responseToCache);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match('./index.html')); // Offline fallback
+    }).catch((err) => {
+      console.warn('SW fetch failed:', err);
     })
   );
 });
