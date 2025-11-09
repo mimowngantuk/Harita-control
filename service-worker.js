@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iot-cache-v2';
+const CACHE_NAME = 'iot-cache-v3';
 const FILES_TO_CACHE = [
   './',
   './index.html',
@@ -7,19 +7,18 @@ const FILES_TO_CACHE = [
   './bg_nature_dark.png',
   './dashboard_anim.json',
   './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  './offline.html'
 ];
 
-// Install event: simpan file ke cache
+// Install event
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(FILES_TO_CACHE);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(FILES_TO_CACHE))
   );
 });
 
-// Activate event: hapus cache lama
+// Activate event
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
@@ -28,30 +27,25 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Fetch event: ambil dari cache dulu, baru fallback ke jaringan
+// Fetch event
 self.addEventListener('fetch', (e) => {
   e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
-      if (cachedResponse) return cachedResponse;
-
-      return fetch(e.request)
-        .then((networkResponse) => {
-          if (
-            e.request.method === 'GET' &&
-            networkResponse &&
-            networkResponse.status === 200 &&
-            networkResponse.type === 'basic'
-          ) {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(e.request, responseToCache);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => caches.match('./index.html')); // Offline fallback
-    }).catch((err) => {
-      console.warn('SW fetch failed:', err);
-    })
+    fetch(e.request)
+      .then((response) => {
+        if (
+          e.request.method === 'GET' &&
+          response &&
+          response.status === 200 &&
+          response.type === 'basic'
+        ) {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, responseToCache));
+        }
+        return response;
+      })
+      .catch(() => {
+        // Fallback offline
+        return caches.match(e.request).then((resp) => resp || caches.match('./offline.html'));
+      })
   );
 });
