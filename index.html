@@ -74,7 +74,15 @@
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/Harita-control/service-worker.js');
   }
+  
 </script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    fetchSensor(); // langsung fetch pertama kali
+  });
+</script>
+
 
 </body>
 </html>

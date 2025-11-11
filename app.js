@@ -1,92 +1,96 @@
+// === ELEMENT REFERENCES ===
 const tempEl = document.getElementById('temp');
 const phEl = document.getElementById('ph');
 const tdsEl = document.getElementById('tds');
 const logEl = document.getElementById('log');
 const statusEl = document.getElementById('status');
 const refreshBtn = document.getElementById('refresh');
-const espIpInput = document.getElementById('espIp');
 
 const pumpBtn = document.getElementById('pumpBtn');
 const phUpBtn = document.getElementById('phUpBtn');
 const phDownBtn = document.getElementById('phDownBtn');
 const nutrientBtn = document.getElementById('nutrientBtn');
+const espIpInput = document.getElementById('espIp');
 
-let espIp = '';
+// === CONFIG ===
+// Link Google Apps Script kamu (deploy Web App)
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbxc6yzkvbvRh7hbciOOC23n_kShxs3o8I-n6gqwTVyApf3opS18wgAb3wDheg53gQyuIg/exec';
 
+// === UTILITIES ===
 function log(msg) {
-  logEl.textContent = `${new Date().toLocaleTimeString()} — ${msg}`;
+  const time = new Date().toLocaleTimeString();
+  logEl.textContent = `${time} — ${msg}`;
+  console.log(msg);
 }
 
-async function fetchSensor() {
-  if (!espIp) {
-    log('Set ESP IP first');
-    statusEl.textContent = 'status: set ESP IP';
-    return;
-  }
-  const url = `http://${espIp}/sensor`;
-  statusEl.textContent = 'status: fetching...';
+function setStatus(msg, ok = true) {
+  statusEl.textContent = `status: ${msg}`;
+  statusEl.style.color = ok ? "#9effa3" : "#ff8c8c";
+}
 
+// === FETCH SENSOR DATA ===
+async function fetchSensor() {
+  setStatus('fetching...', true);
   try {
-    const res = await fetch(url, { cache: 'no-store' });
+    const res = await fetch(`${scriptUrl}?readSensor=1`, { cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
 
     tempEl.textContent = (data.temperature ?? '--') + ' °C';
     phEl.textContent = data.ph ?? '--';
     tdsEl.textContent = `TDS: ${data.tds ?? '--'} / Flow: ${data.flow ?? '--'}`;
-    statusEl.textContent = 'status: OK';
-    log('data updated');
+
+    setStatus('connected');
+    log('✅ Data updated successfully');
   } catch (e) {
-    statusEl.textContent = 'status: error';
-    log('error: ' + e.message);
+    setStatus('error', false);
+    log('❌ Error fetching data: ' + e.message);
   }
 }
 
-// tombol refresh
-refreshBtn.addEventListener('click', () => {
-  espIp = espIpInput.value.trim();
-  fetchSensor();
-});
+// === AUTO REFRESH EVERY 10s ===
+refreshBtn.addEventListener('click', fetchSensor);
+setInterval(fetchSensor, 10000);
 
-// auto refresh tiap 10 detik
-setInterval(() => {
-  if (espIpInput.value.trim()) {
-    espIp = espIpInput.value.trim();
-    fetchSensor();
-  }
-}, 10000);
-
-// fungsi umum untuk kontrol relay
-async function triggerRelay(endpoint, btn) {
-  if (!espIp) {
-    log('Set ESP IP first');
-    statusEl.textContent = 'status: set ESP IP';
-    return;
-  }
-  const url = `http://${espIp}/${endpoint}`;
+// === SEND COMMAND TO SHEET ===
+async function sendCommand(cmd, btn) {
   btn.classList.add('active');
   setTimeout(() => btn.classList.remove('active'), 500);
 
   try {
-    const res = await fetch(url, { method: 'GET' });
+    const res = await fetch(`${scriptUrl}?cmd=${cmd}`);
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    log(`Relay ${endpoint} triggered`);
+    log(`🚀 Command sent: ${cmd}`);
+    setStatus('command sent');
   } catch (e) {
-    log('error: ' + e.message);
+    log('❌ Error sending command: ' + e.message);
+    setStatus('command error', false);
   }
 }
 
-// event untuk tombol relay
-pumpBtn.addEventListener('click', () => triggerRelay('pump', pumpBtn));
-phUpBtn.addEventListener('click', () => triggerRelay('phup', phUpBtn));
-phDownBtn.addEventListener('click', () => triggerRelay('phdown', phDownBtn));
-nutrientBtn.addEventListener('click', () => triggerRelay('nutrient', nutrientBtn));
+// === RELAY BUTTONS ===
+pumpBtn.addEventListener('click', () => sendCommand('pump_on', pumpBtn));
+phUpBtn.addEventListener('click', () => sendCommand('ph_up', phUpBtn));
+phDownBtn.addEventListener('click', () => sendCommand('ph_down', phDownBtn));
+nutrientBtn.addEventListener('click', () => sendCommand('nutrient_on', nutrientBtn));
 
-// Animasi lottie
+// === LOTTIE ===
 const animation = lottie.loadAnimation({
   container: document.getElementById('animationContainer'),
   renderer: 'svg',
   loop: true,
   autoplay: true,
-  path: 'dashboard_anim.json' // nama file animasi kamu di folder yang sama
+  path: 'dashboard_anim.json'
 });
+
+// === OPTIONAL: Kirim command langsung ke ESP juga ===
+async function sendToESP(cmd) {
+  const ip = espIpInput.value.trim();
+  if (!ip) return log('⚠️ ESP IP not set');
+  try {
+    await fetch(`http://${ip}/cmd?${cmd}`);
+    log(`📡 Sent to ESP: ${cmd}`);
+  } catch (e) {
+    log(`⚠️ ESP unreachable: ${e.message}`);
+  }
+}
