@@ -14,7 +14,7 @@ const espIpInput = document.getElementById('espIp');
 
 // === CONFIG ===
 // Link Google Apps Script kamu (deploy Web App)
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbzyrBRh732mjeFZmdB_QKxGbsnHhneGMKVZ4_q-I_QTJ448KpyA8YM8FfzfFk0GNk9grw/exec?readSensor=true';
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbzyrBRh732mjeFZmdB_QKxGbsnHhneGMKVZ4_q-I_QTJ448KpyA8YM8FfzfFk0GNk9grw/exec';
 
 // === UTILITIES ===
 function log(msg) {
@@ -38,7 +38,7 @@ async function fetchSensor() {
 
     tempEl.textContent = (data.temperature ?? '--') + ' °C';
     phEl.textContent = data.ph ?? '--';
-    tdsEl.textContent = `TDS: ${data.tds ?? '--'} / Flow: ${data.flow ?? '--'}`;
+    tdsEl.textContent = `TDS: ${data.tds ?? '--'}`; // Flow dihapus
 
     setStatus('connected');
     log('✅ Data updated successfully');

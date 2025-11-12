@@ -5,19 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#2ecc71">
   <title>Harita Control</title>
-  
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon-192.png" type="image/png">
-
-
 
   <!-- Styles -->
   <link rel="stylesheet" href="styles.css" />
 
-  <!-- Manifest untuk PWA -->
+  <!-- PWA & Icon -->
   <link rel="manifest" href="manifest.json" />
-
-  <!-- Icon (opsional tapi bagus buat PWA) -->
   <link rel="icon" href="icon-192.png" type="image/png">
 </head>
 <body>
@@ -41,7 +34,7 @@
     </div>
 
     <div class="card">
-      <div class="label">TDS / Flow</div>
+      <div class="label">TDS</div>
       <div class="value" id="tds">--</div>
     </div>
 
@@ -71,18 +64,15 @@
 
   <!-- Service Worker -->
   <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/Harita-control/service-worker.js');
-  }
-  
-</script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/Harita-control/service-worker.js');
+    }
+  </script>
 
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    fetchSensor(); // langsung fetch pertama kali
-  });
-</script>
-
-
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchSensor(); // langsung fetch pertama kali
+    });
+  </script>
 </body>
 </html>
