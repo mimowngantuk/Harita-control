@@ -14,7 +14,7 @@ const espIpInput = document.getElementById('espIp');
 
 // === CONFIG ===
 // Link Google Apps Script kamu (deploy Web App)
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbzyrBRh732mjeFZmdB_QKxGbsnHhneGMKVZ4_q-I_QTJ448KpyA8YM8FfzfFk0GNk9grw/exec';
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbzyrBRh732mjeFZmdB_QKxGbsnHhneGMKVZ4_q-I_QTJ448KpyA8YM8FfzfFk0GNk9grw/exec?readSensor=true';
 
 // === UTILITIES ===
 function log(msg) {
