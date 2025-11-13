@@ -10,10 +10,16 @@ const pumpBtn = document.getElementById('pumpBtn');
 const phUpBtn = document.getElementById('phUpBtn');
 const phDownBtn = document.getElementById('phDownBtn');
 const nutrientBtn = document.getElementById('nutrientBtn');
-const espIpInput = document.getElementById('espIp');
 
 // === CONFIG ===
 const scriptUrl = 'https://script.google.com/macros/s/AKfycbzyrBRh732mjeFZmdB_QKxGbsnHhneGMKVZ4_q-I_QTJ448KpyA8YM8FfzfFk0GNk9grw/exec';
+const mqttBroker = "wss://broker.hivemq.com:8884/mqtt";
+const mqttTopicControl = "harita/control";
+const mqttTopicSensor = {
+  temp: "harita/sensor/temp",
+  ph: "harita/sensor/ph",
+  tds: "harita/sensor/tds"
+};
 
 // === UTILITIES ===
 function log(msg) {
@@ -27,7 +33,7 @@ function setStatus(msg, ok = true) {
   statusEl.style.color = ok ? "#9effa3" : "#ff8c8c";
 }
 
-// === FETCH SENSOR DATA ===
+// === FETCH SENSOR DATA (via Google Sheets) ===
 async function fetchSensor() {
   setStatus('fetching...', true);
   try {
@@ -37,10 +43,10 @@ async function fetchSensor() {
 
     tempEl.textContent = (data.temperature ?? '--') + ' °C';
     phEl.textContent = data.ph ?? '--';
-    tdsEl.textContent = `TDS: ${data.tds ?? '--'}`;
+    tdsEl.textContent = (data.tds ?? '--');
 
     setStatus('connected');
-    log('✅ Data updated successfully');
+    log('✅ Data updated successfully (Google Sheets)');
   } catch (e) {
     setStatus('error', false);
     log('❌ Error fetching data: ' + e.message);
@@ -51,30 +57,54 @@ async function fetchSensor() {
 refreshBtn.addEventListener('click', fetchSensor);
 setInterval(fetchSensor, 10000);
 
-// === SEND COMMAND TO SHEET ===
-async function sendCommand(cmd, btn) {
+// === MQTT CONTROL ===
+const client = mqtt.connect(mqttBroker);
+
+client.on("connect", () => {
+  log("🛰️ MQTT connected to HiveMQ broker");
+  setStatus("MQTT connected");
+
+  // Subscribe to sensor topics
+  client.subscribe(Object.values(mqttTopicSensor), (err) => {
+    if (err) log("⚠️ Failed to subscribe to sensor topics");
+    else log("📡 Subscribed to sensor topics");
+  });
+});
+
+client.on("error", (err) => {
+  log("❌ MQTT Error: " + err.message);
+  setStatus("MQTT disconnected", false);
+});
+
+client.on("message", (topic, message) => {
+  const msg = message.toString();
+  if (topic === mqttTopicSensor.temp) tempEl.textContent = msg + " °C";
+  if (topic === mqttTopicSensor.ph) phEl.textContent = msg;
+  if (topic === mqttTopicSensor.tds) tdsEl.textContent = msg;
+  log(`📥 Received [${topic}]: ${msg}`);
+});
+
+// === SEND MQTT COMMANDS ===
+function sendMQTT(cmd, btn) {
+  if (!client.connected) {
+    log("⚠️ MQTT not connected");
+    setStatus("MQTT disconnected", false);
+    return;
+  }
+
   btn.classList.add('active');
   setTimeout(() => btn.classList.remove('active'), 500);
 
-  try {
-    // pakai fungsi setCommand dari Apps Script
-    const res = await fetch(`${scriptUrl}?cmd=${cmd}&action=setCommand`);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-
-    const txt = await res.text();
-    log(`🚀 Command sent: ${cmd} | Response: ${txt}`);
-    setStatus('command sent');
-  } catch (e) {
-    log('❌ Error sending command: ' + e.message);
-    setStatus('command error', false);
-  }
+  client.publish(mqttTopicControl, cmd);
+  log(`🚀 MQTT published: ${cmd}`);
+  setStatus("MQTT command sent");
 }
 
 // === RELAY BUTTONS ===
-pumpBtn.addEventListener('click', () => sendCommand('pump_on', pumpBtn));
-phUpBtn.addEventListener('click', () => sendCommand('ph_up', phUpBtn));
-phDownBtn.addEventListener('click', () => sendCommand('ph_down', phDownBtn));
-nutrientBtn.addEventListener('click', () => sendCommand('nutrient_on', nutrientBtn));
+pumpBtn.addEventListener('click', () => sendMQTT('pump_on', pumpBtn));
+phUpBtn.addEventListener('click', () => sendMQTT('ph_up', phUpBtn));
+phDownBtn.addEventListener('click', () => sendMQTT('ph_down', phDownBtn));
+nutrientBtn.addEventListener('click', () => sendMQTT('nutrient_on', nutrientBtn));
 
 // === LOTTIE ===
 const animation = lottie.loadAnimation({
@@ -85,14 +115,5 @@ const animation = lottie.loadAnimation({
   path: 'dashboard_anim.json'
 });
 
-// === OPTIONAL: Kirim command langsung ke ESP juga ===
-async function sendToESP(cmd) {
-  const ip = espIpInput.value.trim();
-  if (!ip) return log('⚠️ ESP IP not set');
-  try {
-    await fetch(`http://${ip}/cmd?${cmd}`);
-    log(`📡 Sent to ESP: ${cmd}`);
-  } catch (e) {
-    log(`⚠️ ESP unreachable: ${e.message}`);
-  }
-}
+// === INITIAL FETCH ===
+document.addEventListener('DOMContentLoaded', fetchSensor);
