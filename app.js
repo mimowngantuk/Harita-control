@@ -13,7 +13,6 @@ const nutrientBtn = document.getElementById('nutrientBtn');
 const espIpInput = document.getElementById('espIp');
 
 // === CONFIG ===
-// Link Google Apps Script kamu (deploy Web App)
 const scriptUrl = 'https://script.google.com/macros/s/AKfycbzyrBRh732mjeFZmdB_QKxGbsnHhneGMKVZ4_q-I_QTJ448KpyA8YM8FfzfFk0GNk9grw/exec';
 
 // === UTILITIES ===
@@ -32,13 +31,13 @@ function setStatus(msg, ok = true) {
 async function fetchSensor() {
   setStatus('fetching...', true);
   try {
-    const res = await fetch(`${scriptUrl}?readSensor=1`, { cache: 'no-store' });
+    const res = await fetch(`${scriptUrl}?readSensor=true`, { cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
 
     tempEl.textContent = (data.temperature ?? '--') + ' °C';
     phEl.textContent = data.ph ?? '--';
-    tdsEl.textContent = `TDS: ${data.tds ?? '--'}`; // Flow dihapus
+    tdsEl.textContent = `TDS: ${data.tds ?? '--'}`;
 
     setStatus('connected');
     log('✅ Data updated successfully');
@@ -58,9 +57,12 @@ async function sendCommand(cmd, btn) {
   setTimeout(() => btn.classList.remove('active'), 500);
 
   try {
-    const res = await fetch(`${scriptUrl}?cmd=${cmd}`);
+    // pakai fungsi setCommand dari Apps Script
+    const res = await fetch(`${scriptUrl}?cmd=${cmd}&action=setCommand`);
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    log(`🚀 Command sent: ${cmd}`);
+
+    const txt = await res.text();
+    log(`🚀 Command sent: ${cmd} | Response: ${txt}`);
     setStatus('command sent');
   } catch (e) {
     log('❌ Error sending command: ' + e.message);
