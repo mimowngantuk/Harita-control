@@ -35,7 +35,7 @@ function setStatus(msg, ok = true) {
   statusEl.style.color = ok ? "#9effa3" : "#ff8c8c";
 }
 
-// === FETCH SENSOR DATA (via Google Sheets) ===
+// === FETCH SENSOR DATA ===
 async function fetchSensor() {
   setStatus('fetching...', true);
   try {
@@ -45,7 +45,7 @@ async function fetchSensor() {
 
     tempEl.textContent = (data.temperature ?? '--') + ' °C';
     phEl.textContent = data.ph ?? '--';
-    tdsEl.textContent = data.tds ?? '--';
+    tdsEl.textContent = (data.tds ?? '--');
 
     setStatus('connected');
     log('✅ Data updated successfully (Google Sheets)');
@@ -55,7 +55,7 @@ async function fetchSensor() {
   }
 }
 
-// === MQTT SETUP ===
+// === MQTT SETUP (Testing Local) ===
 let client = null;
 
 function connectMQTT(brokerIp) {
@@ -64,7 +64,9 @@ function connectMQTT(brokerIp) {
     return;
   }
 
+  // PAKAI WS BIASA UNTUK TESTING LOKAL
   const mqttUrl = `ws://${brokerIp}`;
+  log(`🔗 Trying to connect to MQTT at ${mqttUrl}`);
   client = mqtt.connect(mqttUrl);
 
   client.on("connect", () => {

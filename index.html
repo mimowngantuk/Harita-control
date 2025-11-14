@@ -14,9 +14,6 @@
   <link rel="icon" href="icon-192.png" type="image/png">
 </head>
 
-<script src="https://unpkg.com/lottie-web@5.12.2/build/player/lottie.min.js"></script>
-<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-
 <body>
   <div class="container">
     <!-- Lottie animation -->
@@ -27,11 +24,13 @@
       <p id="status">status: set broker IP</p>
     </header>
 
+    <!-- Broker connect -->
     <div class="controls">
       <input id="brokerIp" placeholder="Broker IP (e.g. 192.168.43.200:9001)" />
       <button id="connectBtn">Connect Broker</button>
     </div>
 
+    <!-- Sensor cards -->
     <div class="card">
       <div class="label">Temperature</div>
       <div class="value" id="temp">-- °C</div>
@@ -47,6 +46,7 @@
       <div class="value" id="tds">--</div>
     </div>
 
+    <!-- Relay control -->
     <div class="card">
       <div class="label">Relay Control</div>
       <div class="relay-buttons">
@@ -57,15 +57,21 @@
       </div>
     </div>
 
+    <!-- Manual refresh -->
     <div class="controls">
       <button id="refresh">Refresh</button>
     </div>
 
+    <!-- Log -->
     <div class="log" id="log">--</div>
   </div>
 
-  <!-- Lottie library -->
+  <!-- Libraries -->
+  <script src="https://unpkg.com/lottie-web@5.12.2/build/player/lottie.min.js"></script>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+
+  <!-- App logic -->
   <script src="app.js"></script>
 </body>
 </html>
