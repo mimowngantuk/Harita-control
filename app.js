@@ -4,6 +4,9 @@ const phEl = document.getElementById('ph');
 const tdsEl = document.getElementById('tds');
 const logEl = document.getElementById('log');
 const statusEl = document.getElementById('status');
+
+const brokerInput = document.getElementById('brokerIp');
+const connectBtn = document.getElementById('connectBtn');
 const refreshBtn = document.getElementById('refresh');
 
 const pumpBtn = document.getElementById('pumpBtn');
@@ -11,12 +14,14 @@ const phUpBtn = document.getElementById('phUpBtn');
 const phDownBtn = document.getElementById('phDownBtn');
 const nutrientBtn = document.getElementById('nutrientBtn');
 
-const brokerInput = document.getElementById('brokerIp');
-const connectBtn = document.getElementById('connectBtn');
-
 // === CONFIG ===
 const scriptUrl = 'https://script.google.com/macros/s/AKfycbzyrBRh732mjeFZmdB_QKxGbsnHhneGMKVZ4_q-I_QTJ448KpyA8YM8FfzfFk0GNk9grw/exec';
 const mqttTopicControl = "harita/control";
+const mqttTopicSensor = {
+  temp: "harita/sensor/temp",
+  ph: "harita/sensor/ph",
+  tds: "harita/sensor/tds"
+};
 
 // === UTILITIES ===
 function log(msg) {
@@ -40,7 +45,7 @@ async function fetchSensor() {
 
     tempEl.textContent = (data.temperature ?? '--') + ' °C';
     phEl.textContent = data.ph ?? '--';
-    tdsEl.textContent = (data.tds ?? '--');
+    tdsEl.textContent = data.tds ?? '--';
 
     setStatus('connected');
     log('✅ Data updated successfully (Google Sheets)');
@@ -50,37 +55,41 @@ async function fetchSensor() {
   }
 }
 
-// === AUTO REFRESH EVERY 10s ===
-refreshBtn.addEventListener('click', fetchSensor);
-setInterval(fetchSensor, 10000);
+// === MQTT SETUP ===
+let client = null;
 
-// === MQTT CONTROL ===
-let client;
-
-connectBtn.addEventListener('click', () => {
-  const brokerIp = brokerInput.value.trim();
+function connectMQTT(brokerIp) {
   if (!brokerIp) {
-    log('⚠️ Please enter broker IP');
+    setStatus("Please enter broker IP", false);
     return;
   }
 
-  const mqttUrl = `ws://${brokerIp}`; // ws://IP:9001
-  client = mqtt.connect(mqttUrl, {
-    username: 'harita',
-    password: 'mimo',
-    reconnectPeriod: 2000
-  });
+  const mqttUrl = `ws://${brokerIp}`;
+  client = mqtt.connect(mqttUrl);
 
   client.on("connect", () => {
-    log("🛰️ Connected to Mosquitto broker");
+    log(`🛰️ MQTT connected to ${brokerIp}`);
     setStatus("MQTT connected");
+
+    client.subscribe(Object.values(mqttTopicSensor), (err) => {
+      if (err) log("⚠️ Failed to subscribe to sensor topics");
+      else log("📡 Subscribed to sensor topics");
+    });
   });
 
   client.on("error", (err) => {
     log("❌ MQTT Error: " + err.message);
     setStatus("MQTT disconnected", false);
   });
-});
+
+  client.on("message", (topic, message) => {
+    const msg = message.toString();
+    if (topic === mqttTopicSensor.temp) tempEl.textContent = msg + " °C";
+    if (topic === mqttTopicSensor.ph) phEl.textContent = msg;
+    if (topic === mqttTopicSensor.tds) tdsEl.textContent = msg;
+    log(`📥 Received [${topic}]: ${msg}`);
+  });
+}
 
 // === SEND MQTT COMMANDS ===
 function sendMQTT(cmd, btn) {
@@ -98,20 +107,17 @@ function sendMQTT(cmd, btn) {
   setStatus("MQTT command sent");
 }
 
-// === RELAY BUTTONS ===
+// === BUTTON EVENTS ===
+connectBtn.addEventListener('click', () => connectMQTT(brokerInput.value));
+refreshBtn.addEventListener('click', fetchSensor);
+
 pumpBtn.addEventListener('click', () => sendMQTT('pump_on', pumpBtn));
 phUpBtn.addEventListener('click', () => sendMQTT('ph_up', phUpBtn));
 phDownBtn.addEventListener('click', () => sendMQTT('ph_down', phDownBtn));
 nutrientBtn.addEventListener('click', () => sendMQTT('nutrient_on', nutrientBtn));
 
-// === LOTTIE ===
-const animation = lottie.loadAnimation({
-  container: document.getElementById('animationContainer'),
-  renderer: 'svg',
-  loop: true,
-  autoplay: true,
-  path: 'dashboard_anim.json'
-});
+// === AUTO REFRESH EVERY 10s ===
+setInterval(fetchSensor, 10000);
 
 // === INITIAL FETCH ===
 document.addEventListener('DOMContentLoaded', fetchSensor);
