@@ -15,7 +15,6 @@
 </head>
 
 <script src="https://unpkg.com/lottie-web@5.12.2/build/player/lottie.min.js"></script>
-<!-- MQTT via CDN -->
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
 <body>
@@ -25,8 +24,13 @@
 
     <header>
       <h1>Harita Control</h1>
-      <p id="status">status: set ESP IP</p>
+      <p id="status">status: set broker IP</p>
     </header>
+
+    <div class="controls">
+      <input id="brokerIp" placeholder="Broker IP (e.g. 192.168.43.200:9001)" />
+      <button id="connectBtn">Connect Broker</button>
+    </div>
 
     <div class="card">
       <div class="label">Temperature</div>
@@ -55,7 +59,6 @@
 
     <div class="controls">
       <button id="refresh">Refresh</button>
-      <input id="espIp" placeholder="ESP IP (e.g. 192.168.43.200)" />
     </div>
 
     <div class="log" id="log">--</div>
@@ -63,21 +66,6 @@
 
   <!-- Lottie library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
-
-  <!-- App logic -->
   <script src="app.js"></script>
-
-  <!-- Service Worker -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/Harita-control/service-worker.js');
-    }
-  </script>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      fetchSensor(); // langsung fetch pertama kali
-    });
-  </script>
 </body>
 </html>

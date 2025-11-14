@@ -11,15 +11,12 @@ const phUpBtn = document.getElementById('phUpBtn');
 const phDownBtn = document.getElementById('phDownBtn');
 const nutrientBtn = document.getElementById('nutrientBtn');
 
+const brokerInput = document.getElementById('brokerIp');
+const connectBtn = document.getElementById('connectBtn');
+
 // === CONFIG ===
 const scriptUrl = 'https://script.google.com/macros/s/AKfycbzyrBRh732mjeFZmdB_QKxGbsnHhneGMKVZ4_q-I_QTJ448KpyA8YM8FfzfFk0GNk9grw/exec';
-const mqttBroker = "wss://broker.hivemq.com:8884/mqtt";
 const mqttTopicControl = "harita/control";
-const mqttTopicSensor = {
-  temp: "harita/sensor/temp",
-  ph: "harita/sensor/ph",
-  tds: "harita/sensor/tds"
-};
 
 // === UTILITIES ===
 function log(msg) {
@@ -58,35 +55,36 @@ refreshBtn.addEventListener('click', fetchSensor);
 setInterval(fetchSensor, 10000);
 
 // === MQTT CONTROL ===
-const client = mqtt.connect(mqttBroker);
+let client;
 
-client.on("connect", () => {
-  log("🛰️ MQTT connected to HiveMQ broker");
-  setStatus("MQTT connected");
+connectBtn.addEventListener('click', () => {
+  const brokerIp = brokerInput.value.trim();
+  if (!brokerIp) {
+    log('⚠️ Please enter broker IP');
+    return;
+  }
 
-  // Subscribe to sensor topics
-  client.subscribe(Object.values(mqttTopicSensor), (err) => {
-    if (err) log("⚠️ Failed to subscribe to sensor topics");
-    else log("📡 Subscribed to sensor topics");
+  const mqttUrl = `ws://${brokerIp}`; // ws://IP:9001
+  client = mqtt.connect(mqttUrl, {
+    username: 'harita',
+    password: 'mimo',
+    reconnectPeriod: 2000
   });
-});
 
-client.on("error", (err) => {
-  log("❌ MQTT Error: " + err.message);
-  setStatus("MQTT disconnected", false);
-});
+  client.on("connect", () => {
+    log("🛰️ Connected to Mosquitto broker");
+    setStatus("MQTT connected");
+  });
 
-client.on("message", (topic, message) => {
-  const msg = message.toString();
-  if (topic === mqttTopicSensor.temp) tempEl.textContent = msg + " °C";
-  if (topic === mqttTopicSensor.ph) phEl.textContent = msg;
-  if (topic === mqttTopicSensor.tds) tdsEl.textContent = msg;
-  log(`📥 Received [${topic}]: ${msg}`);
+  client.on("error", (err) => {
+    log("❌ MQTT Error: " + err.message);
+    setStatus("MQTT disconnected", false);
+  });
 });
 
 // === SEND MQTT COMMANDS ===
 function sendMQTT(cmd, btn) {
-  if (!client.connected) {
+  if (!client || !client.connected) {
     log("⚠️ MQTT not connected");
     setStatus("MQTT disconnected", false);
     return;
