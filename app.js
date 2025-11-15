@@ -14,8 +14,9 @@ const phUpBtn = document.getElementById('phUpBtn');
 const phDownBtn = document.getElementById('phDownBtn');
 const nutrientBtn = document.getElementById('nutrientBtn');
 
-// === CONFIG ===
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbzyrBRh732mjeFZmdB_QKxGbsnHhneGMKVZ4_q-I_QTJ448KpyA8YM8FfzfFk0GNk9grw/exec';
+// === CONFIG (FIXED) ===
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbygqEsOpMQUFsCMyytktIcVbXGTTX3syzcwf5w47oXMbdLyqx2H36D1az-7ndG_-DbjDw/exec?readSensor=true';
+
 const mqttTopicControl = "harita/control";
 const mqttTopicSensor = {
   temp: "harita/sensor/temp",
@@ -35,15 +36,17 @@ function setStatus(msg, ok = true) {
   statusEl.style.color = ok ? "#9effa3" : "#ff8c8c";
 }
 
-// === FETCH SENSOR DATA ===
+// === FETCH SENSOR DATA (GOOGLE SHEETS) ===
 async function fetchSensor() {
   setStatus('fetching...', true);
+
   try {
-    const res = await fetch(`${scriptUrl}?readSensor=true`, { cache: 'no-store' });
+    const res = await fetch(`${scriptUrl}?mode=read`, { cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
+
     const data = await res.json();
 
-    tempEl.textContent = (data.temperature ?? '--') + ' °C';
+    tempEl.textContent = (data.temp ?? '--') + ' °C';
     phEl.textContent = data.ph ?? '--';
     tdsEl.textContent = (data.tds ?? '--');
 
@@ -55,7 +58,7 @@ async function fetchSensor() {
   }
 }
 
-// === MQTT SETUP (Testing Local) ===
+// === MQTT SETUP (LOCAL TEST MODE) ===
 let client = null;
 
 function connectMQTT(brokerIp) {
@@ -64,9 +67,9 @@ function connectMQTT(brokerIp) {
     return;
   }
 
-  // PAKAI WS BIASA UNTUK TESTING LOKAL
   const mqttUrl = `ws://${brokerIp}`;
   log(`🔗 Trying to connect to MQTT at ${mqttUrl}`);
+
   client = mqtt.connect(mqttUrl);
 
   client.on("connect", () => {
@@ -89,6 +92,7 @@ function connectMQTT(brokerIp) {
     if (topic === mqttTopicSensor.temp) tempEl.textContent = msg + " °C";
     if (topic === mqttTopicSensor.ph) phEl.textContent = msg;
     if (topic === mqttTopicSensor.tds) tdsEl.textContent = msg;
+
     log(`📥 Received [${topic}]: ${msg}`);
   });
 }

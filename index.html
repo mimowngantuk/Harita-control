@@ -26,7 +26,8 @@
 
     <!-- Broker connect -->
     <div class="controls">
-      <input id="brokerIp" placeholder="Broker IP (e.g. 192.168.43.200:9001)" />
+      <input id="brokerIp" type="text" autocomplete="off" autocapitalize="none"
+        placeholder="Broker IP (e.g. 192.168.43.200:9001)" />
       <button id="connectBtn">Connect Broker</button>
     </div>
 
@@ -69,7 +70,6 @@
   <!-- Libraries -->
   <script src="https://unpkg.com/lottie-web@5.12.2/build/player/lottie.min.js"></script>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
 
   <!-- App logic -->
   <script src="app.js"></script>

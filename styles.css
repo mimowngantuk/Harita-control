@@ -1,37 +1,71 @@
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, Segoe UI, Roboto, "Helvetica Neue", Arial;
   background: url('bg_nature_dark.png') no-repeat center center fixed;
   background-size: cover;
-  color:#eee;
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
+  color: #eee;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
-.container{
-  width:360px;
-  max-width:95%;
-  background:rgba(255,255,255,0.03);
-  border-radius:16px;
-  padding:18px;
-  box-shadow:0 8px 30px rgba(0,0,0,0.6);
-}
-header h1{margin:0;font-size:20px}
-header p{margin:6px 0 12px;font-size:13px;color:#bdbdbd}
-.card{
-  background:rgba(255,255,255,0.02);
-  padding:12px;
-  border-radius:12px;
-  margin-bottom:10px;
-}
-.label{font-size:12px;color:#bdbdbd}
-.value{font-size:18px;margin-top:6px}
-.log{margin-top:10px;font-size:12px;color:#ffdd99}
 
-/* Lottie area */
+.container {
+  width: 360px;
+  max-width: 95%;
+  background: rgba(255,255,255,0.03);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+
+  /* HP smooth scrolling */
+  max-height: 95vh;
+  overflow-y: auto;
+}
+
+/* Header */
+header h1 {
+  margin: 0;
+  font-size: 20px;
+}
+header p {
+  margin: 6px 0 12px;
+  font-size: 13px;
+  color: #bdbdbd;
+}
+
+/* Sensor cards */
+.card {
+  background: rgba(255,255,255,0.02);
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.label {
+  font-size: 12px;
+  color: #bdbdbd;
+}
+.value {
+  font-size: 18px;
+  margin-top: 6px;
+}
+
+/* Log */
+.log {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #ffea9e; /* upgraded */
+}
+
+/* Lottie */
 .lottie {
   width: 100%;
   height: 100px;
@@ -40,13 +74,14 @@ header p{margin:6px 0 12px;font-size:13px;color:#bdbdbd}
   justify-content: center;
 }
 
-/* Tombol relay */
+/* Relay buttons */
 .relay-buttons {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin-top: 8px;
 }
+
 .relay-buttons button {
   padding: 10px 0;
   border: 1px solid rgba(255,255,255,0.15);
@@ -54,45 +89,63 @@ header p{margin:6px 0 12px;font-size:13px;color:#bdbdbd}
   background: rgba(255,255,255,0.08);
   color: #fff;
   font-weight: 600;
+
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
   cursor: pointer;
   transition: all 0.25s ease;
 }
+
 .relay-buttons button:hover {
   background: rgba(255,255,255,0.2);
   transform: scale(1.04);
 }
+
 .relay-buttons button.active {
   background: rgba(46,204,113,0.25);
   border-color: rgba(46,204,113,0.4);
   box-shadow: 0 0 8px rgba(46,204,113,0.5);
 }
 
-/* Tombol refresh */
+/* Controls */
 .controls {
   display: flex;
   gap: 8px;
   align-items: center;
   margin-top: 10px;
 }
+
 .controls input {
   flex: 1;
   padding: 8px;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.06);
-  background: transparent;
+  background: rgba(0,0,0,0.2);
   color: #eee;
+
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
+
+.controls input::placeholder {
+  color: #999;
+}
+
 .controls button {
   border: 1px solid rgba(255,255,255,0.1);
   background: rgba(46,204,113,0.15);
-  backdrop-filter: blur(8px);
   color: #fff;
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
   transition: all 0.25s ease;
   cursor: pointer;
   border-radius: 10px;
   padding: 8px 12px;
 }
+
 .controls button:hover {
   background: rgba(46,204,113,0.25);
   transform: scale(1.05);
