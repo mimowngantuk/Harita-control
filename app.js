@@ -38,7 +38,7 @@ function setStatus(msg, ok = true) {
 
 // === FETCH FROM GOOGLE SHEETS ===
 async function fetchSensor() {
-  setStatus('fetching...');
+  setStatus('fetching...', true);
 
   try {
     const res = await fetch(`${scriptUrl}?readSensor=true`, { cache: 'no-store' });
@@ -48,15 +48,16 @@ async function fetchSensor() {
 
     tempEl.textContent = (data.temperature ?? '--') + ' °C';
     phEl.textContent = data.ph ?? '--';
-    tdsEl.textContent = data.tds ?? '--';
+    tdsEl.textContent = (data.tds ?? '--');
 
     setStatus('connected');
-    log('✅ Data updated (Google Sheets)');
+    log('✅ Data updated successfully (Google Sheets)');
   } catch (e) {
     setStatus('error', false);
     log('❌ Error fetching data: ' + e.message);
   }
 }
+
 
 // === MQTT ===
 let client = null;
