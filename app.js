@@ -14,8 +14,8 @@ const phUpBtn = document.getElementById('phUpBtn');
 const phDownBtn = document.getElementById('phDownBtn');
 const nutrientBtn = document.getElementById('nutrientBtn');
 
-// === CONFIG (FIXED) ===
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbygqEsOpMQUFsCMyytktIcVbXGTTX3syzcwf5w47oXMbdLyqx2H36D1az-7ndG_-DbjDw/exec?readSensor=true';
+// === CONFIG ===
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbygqEsOpMQUFsCMyytktIcVbXGTTX3syzcwf5w47oXMbdLyqx2H36D1az-7ndG_-DbjDw/exec';
 
 const mqttTopicControl = "harita/control";
 const mqttTopicSensor = {
@@ -26,8 +26,8 @@ const mqttTopicSensor = {
 
 // === UTILITIES ===
 function log(msg) {
-  const time = new Date().toLocaleTimeString();
-  logEl.textContent = `${time} — ${msg}`;
+  const t = new Date().toLocaleTimeString();
+  logEl.textContent = `${t} — ${msg}`;
   console.log(msg);
 }
 
@@ -36,29 +36,29 @@ function setStatus(msg, ok = true) {
   statusEl.style.color = ok ? "#9effa3" : "#ff8c8c";
 }
 
-// === FETCH SENSOR DATA (GOOGLE SHEETS) ===
+// === FETCH FROM GOOGLE SHEETS ===
 async function fetchSensor() {
-  setStatus('fetching...', true);
+  setStatus('fetching...');
 
   try {
-    const res = await fetch(`${scriptUrl}?mode=read`, { cache: 'no-store' });
+    const res = await fetch(`${scriptUrl}?readSensor=true`, { cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
 
     const data = await res.json();
 
-    tempEl.textContent = (data.temp ?? '--') + ' °C';
+    tempEl.textContent = (data.temperature ?? '--') + ' °C';
     phEl.textContent = data.ph ?? '--';
-    tdsEl.textContent = (data.tds ?? '--');
+    tdsEl.textContent = data.tds ?? '--';
 
     setStatus('connected');
-    log('✅ Data updated successfully (Google Sheets)');
+    log('✅ Data updated (Google Sheets)');
   } catch (e) {
     setStatus('error', false);
     log('❌ Error fetching data: ' + e.message);
   }
 }
 
-// === MQTT SETUP (LOCAL TEST MODE) ===
+// === MQTT ===
 let client = null;
 
 function connectMQTT(brokerIp) {
@@ -68,40 +68,41 @@ function connectMQTT(brokerIp) {
   }
 
   const mqttUrl = `ws://${brokerIp}`;
-  log(`🔗 Trying to connect to MQTT at ${mqttUrl}`);
+  log(`🔗 Connecting to MQTT ${mqttUrl}`);
 
   client = mqtt.connect(mqttUrl);
 
   client.on("connect", () => {
-    log(`🛰️ MQTT connected to ${brokerIp}`);
+    log(`🛰️ MQTT connected`);
     setStatus("MQTT connected");
 
     client.subscribe(Object.values(mqttTopicSensor), (err) => {
-      if (err) log("⚠️ Failed to subscribe to sensor topics");
+      if (err) log("⚠️ Failed to subscribe");
       else log("📡 Subscribed to sensor topics");
     });
   });
 
-  client.on("error", (err) => {
+  client.on("error", err => {
     log("❌ MQTT Error: " + err.message);
     setStatus("MQTT disconnected", false);
   });
 
-  client.on("message", (topic, message) => {
-    const msg = message.toString();
+  client.on("message", (topic, msgBuf) => {
+    const msg = msgBuf.toString();
+
     if (topic === mqttTopicSensor.temp) tempEl.textContent = msg + " °C";
     if (topic === mqttTopicSensor.ph) phEl.textContent = msg;
     if (topic === mqttTopicSensor.tds) tdsEl.textContent = msg;
 
-    log(`📥 Received [${topic}]: ${msg}`);
+    log(`📥 [${topic}] ${msg}`);
   });
 }
 
-// === SEND MQTT COMMANDS ===
+// === SEND MQTT CMD ===
 function sendMQTT(cmd, btn) {
   if (!client || !client.connected) {
-    log("⚠️ MQTT not connected");
     setStatus("MQTT disconnected", false);
+    log("⚠️ MQTT not connected");
     return;
   }
 
@@ -109,11 +110,11 @@ function sendMQTT(cmd, btn) {
   setTimeout(() => btn.classList.remove('active'), 500);
 
   client.publish(mqttTopicControl, cmd);
-  log(`🚀 MQTT published: ${cmd}`);
-  setStatus("MQTT command sent");
+  log(`🚀 Sent: ${cmd}`);
+  setStatus("command sent");
 }
 
-// === BUTTON EVENTS ===
+// === EVENTS ===
 connectBtn.addEventListener('click', () => connectMQTT(brokerInput.value));
 refreshBtn.addEventListener('click', fetchSensor);
 
@@ -122,8 +123,6 @@ phUpBtn.addEventListener('click', () => sendMQTT('ph_up', phUpBtn));
 phDownBtn.addEventListener('click', () => sendMQTT('ph_down', phDownBtn));
 nutrientBtn.addEventListener('click', () => sendMQTT('nutrient_on', nutrientBtn));
 
-// === AUTO REFRESH EVERY 10s ===
+// === AUTO ===
 setInterval(fetchSensor, 10000);
-
-// === INITIAL FETCH ===
 document.addEventListener('DOMContentLoaded', fetchSensor);
